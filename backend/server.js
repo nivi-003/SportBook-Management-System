@@ -39,8 +39,6 @@ const PORT = process.env.PORT || 5001;
 
 // Only start listening when this file is run directly (not when imported by tests)
 if (require.main === module) {
-  console.log('MONGO_URI:', process.env.MONGO_URI ? 'SET ✓' : 'NOT SET ✗');
-  console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET ✓' : 'NOT SET ✗');
   connectDB().then(() => {
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
