@@ -11,15 +11,28 @@ const {
 
 const verifyToken   = require('../middleware/verifyToken');
 const requireAdmin  = require('../middleware/requireAdmin');
-const upload        = require('../middleware/upload');
+
+// Use Cloudinary upload if configured, otherwise fall back to no-op
+let upload;
+try {
+  const cloudinaryConfig = require('../config/cloudinary');
+  if (process.env.CLOUDINARY_CLOUD_NAME) {
+    upload = cloudinaryConfig.upload;
+  }
+} catch (e) {}
+
+// Fallback: no-op middleware if Cloudinary not configured
+const uploadMiddleware = upload
+  ? upload.single('image')
+  : (req, res, next) => next();
 
 // ── Public-ish (requires valid JWT) ──────────────────────────────────────────
 router.get('/',    verifyToken, getAllVenues);
 router.get('/:id', verifyToken, getVenueById);
 
 // ── Admin-only ────────────────────────────────────────────────────────────────
-router.post(  '/',    verifyToken, requireAdmin, upload.single('image'), createVenue);
-router.put(   '/:id', verifyToken, requireAdmin, upload.single('image'), updateVenue);
+router.post(  '/',    verifyToken, requireAdmin, uploadMiddleware, createVenue);
+router.put(   '/:id', verifyToken, requireAdmin, uploadMiddleware, updateVenue);
 router.delete('/:id', verifyToken, requireAdmin, deleteVenue);
 
 module.exports = router;

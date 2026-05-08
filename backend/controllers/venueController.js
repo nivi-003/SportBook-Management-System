@@ -44,9 +44,11 @@ exports.createVenue = async (req, res) => {
       });
     }
 
-    // Set imageUrl — support both file upload and direct URL input
+    // Set imageUrl — support Cloudinary upload, file upload, or direct URL input
     let imageUrl = "";
-    if (req.file) {
+    if (req.file && req.file.path) {
+      imageUrl = req.file.path; // Cloudinary returns the URL in req.file.path
+    } else if (req.file && req.file.filename) {
       imageUrl = `/uploads/${req.file.filename}`;
     } else if (req.body.imageUrl) {
       imageUrl = req.body.imageUrl;
@@ -117,8 +119,10 @@ exports.updateVenue = async (req, res) => {
       }
     }
 
-    // Update imageUrl — support both file upload and direct URL input
-    if (req.file) {
+    // Update imageUrl — support Cloudinary upload, file upload, or direct URL input
+    if (req.file && req.file.path) {
+      venue.imageUrl = req.file.path; // Cloudinary URL
+    } else if (req.file && req.file.filename) {
       venue.imageUrl = `/uploads/${req.file.filename}`;
     } else if (req.body.imageUrl !== undefined) {
       venue.imageUrl = req.body.imageUrl;

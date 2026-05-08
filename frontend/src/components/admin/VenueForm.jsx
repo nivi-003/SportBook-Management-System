@@ -18,6 +18,7 @@ export default function VenueForm({ initialValues, onSubmit, onCancel, loading }
     pricePerHour: '',
     slots: [],
     imageUrl: '',
+    image: null,
   })
   const [errors, setErrors] = useState({})
 
@@ -32,6 +33,7 @@ export default function VenueForm({ initialValues, onSubmit, onCancel, loading }
         pricePerHour: initialValues.pricePerHour ?? '',
         slots: initialValues.slots ?? [],
         imageUrl: initialValues.imageUrl ?? '',
+      image: null,
       })
     }
   }, [initialValues])
@@ -61,6 +63,13 @@ export default function VenueForm({ initialValues, onSubmit, onCancel, loading }
     return errs
   }
 
+  const handleImageFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setForm((prev) => ({ ...prev, image: file, imageUrl: '' }))
+    }
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     const errs = validate()
@@ -69,16 +78,28 @@ export default function VenueForm({ initialValues, onSubmit, onCancel, loading }
       return
     }
 
-    // Send as JSON (no file upload — use image URL instead)
-    onSubmit({
-      name: form.name.trim(),
-      sportsType: form.sportsType,
-      location: form.location.trim(),
-      description: form.description.trim(),
-      pricePerHour: form.pricePerHour,
-      slots: form.slots,
-      imageUrl: form.imageUrl.trim(),
-    })
+    // If file selected, send as FormData; otherwise send as JSON with imageUrl
+    if (form.image) {
+      const formData = new FormData()
+      formData.append('name', form.name.trim())
+      formData.append('sportsType', form.sportsType)
+      formData.append('location', form.location.trim())
+      formData.append('description', form.description.trim())
+      formData.append('pricePerHour', form.pricePerHour)
+      formData.append('slots', JSON.stringify(form.slots))
+      formData.append('image', form.image)
+      onSubmit(formData)
+    } else {
+      onSubmit({
+        name: form.name.trim(),
+        sportsType: form.sportsType,
+        location: form.location.trim(),
+        description: form.description.trim(),
+        pricePerHour: form.pricePerHour,
+        slots: form.slots,
+        imageUrl: form.imageUrl.trim(),
+      })
+    }
   }
 
   return (
@@ -153,27 +174,40 @@ export default function VenueForm({ initialValues, onSubmit, onCancel, loading }
         {errors.pricePerHour && <p className="mt-1 text-xs text-red-500">{errors.pricePerHour}</p>}
       </div>
 
-      {/* Image URL */}
+      {/* Image — file upload OR URL */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Venue Image URL</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Venue Image</label>
+
+        {/* File upload */}
+        <input
+          type="file"
+          accept="image/jpeg,image/jpg,image/png,image/webp"
+          onChange={handleImageFileChange}
+          className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-2"
+        />
+
+        <p className="text-xs text-gray-400 mb-1">— OR paste an image URL —</p>
+
+        {/* Image URL */}
         <input
           name="imageUrl"
           value={form.imageUrl}
           onChange={handleChange}
-          placeholder="https://example.com/image.jpg (optional)"
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="https://example.com/image.jpg"
+          disabled={!!form.image}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
         />
-        {form.imageUrl && (
-          <img
-            src={form.imageUrl}
-            alt="Preview"
-            className="mt-2 h-28 w-full object-cover rounded-lg"
-            onError={(e) => { e.currentTarget.style.display = 'none' }}
-          />
+
+        {/* Preview */}
+        {form.image && (
+          <div className="mt-2">
+            <img src={URL.createObjectURL(form.image)} alt="Preview" className="h-28 w-full object-cover rounded-lg" />
+            <button type="button" onClick={() => setForm(p => ({ ...p, image: null }))} className="text-xs text-red-500 mt-1 hover:underline">Remove file</button>
+          </div>
         )}
-        <p className="text-xs text-gray-400 mt-1">
-          Paste any image URL from Google Images or Unsplash
-        </p>
+        {!form.image && form.imageUrl && (
+          <img src={form.imageUrl} alt="Preview" className="mt-2 h-28 w-full object-cover rounded-lg" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+        )}
       </div>
 
       {/* Slots */}
