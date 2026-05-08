@@ -55,14 +55,14 @@ export default function VenueManagementPage() {
     setEditingVenue(null)
   }
 
-  const handleFormSubmit = async (formData) => {
+  const handleFormSubmit = async (data) => {
     setFormLoading(true)
     try {
       if (editingVenue) {
-        await updateVenue(editingVenue._id, formData)
+        await updateVenue(editingVenue._id, data)
         showToast('Venue updated successfully!', 'success')
       } else {
-        await createVenue(formData)
+        await createVenue(data)
         showToast('Venue added successfully!', 'success')
       }
       handleCloseForm()

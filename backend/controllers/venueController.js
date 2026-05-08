@@ -44,10 +44,12 @@ exports.createVenue = async (req, res) => {
       });
     }
 
-    // Set imageUrl from uploaded file if present
+    // Set imageUrl — support both file upload and direct URL input
     let imageUrl = "";
     if (req.file) {
       imageUrl = `/uploads/${req.file.filename}`;
+    } else if (req.body.imageUrl) {
+      imageUrl = req.body.imageUrl;
     }
 
     // Parse slots - may be JSON string or array
@@ -115,9 +117,11 @@ exports.updateVenue = async (req, res) => {
       }
     }
 
-    // Update imageUrl if new file uploaded
+    // Update imageUrl — support both file upload and direct URL input
     if (req.file) {
       venue.imageUrl = `/uploads/${req.file.filename}`;
+    } else if (req.body.imageUrl !== undefined) {
+      venue.imageUrl = req.body.imageUrl;
     }
 
     const updatedVenue = await venue.save();
