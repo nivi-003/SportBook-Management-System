@@ -155,4 +155,47 @@ async function adminLogin(req, res) {
   }
 }
 
-module.exports = { register, login, adminLogin };
+/**
+ * POST /api/auth/check-mobile
+ * Public — checks if a mobile number is registered.
+ */
+async function checkMobile(req, res) {
+  try {
+    const { mobile } = req.body;
+    const user = await User.findOne({ mobile });
+    if (!user) {
+      return res.status(404).json({ message: "Mobile number not found. Please register first." });
+    }
+    return res.status(200).json({ message: "Mobile found" });
+  } catch (err) {
+    throw err;
+  }
+}
+
+/**
+ * POST /api/auth/reset-password
+ * Public — resets password for a registered mobile number.
+ */
+async function resetPassword(req, res) {
+  try {
+    const { mobile, newPassword } = req.body;
+    if (!mobile || !newPassword) {
+      return res.status(400).json({ message: "Mobile and new password are required." });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters." });
+    }
+    const user = await User.findOne({ mobile });
+    if (!user) {
+      return res.status(404).json({ message: "Mobile number not found." });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    user.password = hashedPassword;
+    await user.save();
+    return res.status(200).json({ message: "Password reset successfully." });
+  } catch (err) {
+    throw err;
+  }
+}
+
+module.exports = { register, login, adminLogin, checkMobile, resetPassword };

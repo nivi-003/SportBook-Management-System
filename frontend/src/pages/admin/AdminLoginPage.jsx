@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { adminLogin } from '../../services/authService'
@@ -80,6 +80,12 @@ export default function AdminLoginPage() {
             {loading ? 'Signing in…' : 'Sign In as Admin'}
           </button>
         </form>
+
+        <p className="text-sm text-center text-gray-400 mt-6">
+          <Link to="/reset-password" className="hover:underline hover:text-gray-600">
+            Forgot password?
+          </Link>
+        </p>
       </div>
     </div>
   )
