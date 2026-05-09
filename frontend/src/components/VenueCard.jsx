@@ -13,9 +13,9 @@ export default function VenueCard({ venue }) {
       className="block bg-white rounded-2xl shadow-md overflow-hidden transition-transform duration-200 hover:scale-105 hover:shadow-xl"
     >
       <img
-        src={imageSrc}
-        alt={name}
-        className="object-cover h-48 w-full"
+        src={venue.imageUrl || "https://via.placeholder.com/400x250?text=Sports+Venue"}
+        alt={venue.name}
+        className="w-full h-48 object-cover"
         onError={(e) => {
           e.currentTarget.src = '/placeholder.jpg';
         }}

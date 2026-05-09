@@ -1,15 +1,37 @@
 import { useState, useEffect } from 'react'
 
-const SPORTS_TYPES = ['Football Turf', 'Cricket Ground', 'Badminton Court', 'Tennis Court']
-
-const DEFAULT_SLOTS = [
-  '06:00-07:00', '07:00-08:00', '08:00-09:00', '09:00-10:00',
-  '10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00',
-  '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00',
-  '18:00-19:00', '19:00-20:00', '20:00-21:00', '21:00-22:00',
+const SPORTS_TYPES = [
+  'Football Turf',
+  'Cricket Ground',
+  'Badminton Court',
+  'Tennis Court',
 ]
 
-export default function VenueForm({ initialValues, onSubmit, onCancel, loading }) {
+const DEFAULT_SLOTS = [
+  '06:00-07:00',
+  '07:00-08:00',
+  '08:00-09:00',
+  '09:00-10:00',
+  '10:00-11:00',
+  '11:00-12:00',
+  '12:00-13:00',
+  '13:00-14:00',
+  '14:00-15:00',
+  '15:00-16:00',
+  '16:00-17:00',
+  '17:00-18:00',
+  '18:00-19:00',
+  '19:00-20:00',
+  '20:00-21:00',
+  '21:00-22:00',
+]
+
+export default function VenueForm({
+  initialValues,
+  onSubmit,
+  onCancel,
+  loading,
+}) {
   const [form, setForm] = useState({
     name: '',
     sportsType: SPORTS_TYPES[0],
@@ -19,6 +41,7 @@ export default function VenueForm({ initialValues, onSubmit, onCancel, loading }
     slots: [],
     imageUrl: '',
   })
+
   const [errors, setErrors] = useState({})
   const [imageUploading, setImageUploading] = useState(false)
 
@@ -38,8 +61,18 @@ export default function VenueForm({ initialValues, onSubmit, onCancel, loading }
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }))
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: undefined,
+      }))
+    }
   }
 
   const toggleSlot = (slot) => {
@@ -53,37 +86,64 @@ export default function VenueForm({ initialValues, onSubmit, onCancel, loading }
 
   const validate = () => {
     const errs = {}
-    if (!form.name.trim()) errs.name = 'Venue name is required.'
-    if (!form.sportsType) errs.sportsType = 'Sports type is required.'
-    if (!form.location.trim()) errs.location = 'Location is required.'
-    if (!form.pricePerHour || isNaN(form.pricePerHour) || Number(form.pricePerHour) < 0)
+
+    if (!form.name.trim()) {
+      errs.name = 'Venue name is required.'
+    }
+
+    if (!form.location.trim()) {
+      errs.location = 'Location is required.'
+    }
+
+    if (
+      !form.pricePerHour ||
+      isNaN(form.pricePerHour) ||
+      Number(form.pricePerHour) < 0
+    ) {
       errs.pricePerHour = 'Enter a valid price per hour.'
-    if (!form.imageUrl.trim())
-      errs.imageUrl = 'Venue image is required. Upload a file or paste an image URL.'
+    }
+
+    if (!form.imageUrl.trim()) {
+      errs.imageUrl =
+        'Venue image is required. Upload a file or paste image URL.'
+    }
+
     return errs
   }
 
   const handleImageFileChange = async (e) => {
     const file = e.target.files[0]
+
     if (!file) return
+
     setImageUploading(true)
-    if (errors.imageUrl) setErrors((prev) => ({ ...prev, imageUrl: undefined }))
+
     try {
       const formData = new FormData()
+
       formData.append('file', file)
       formData.append('upload_preset', 'sportbook_unsigned')
-      const res = await fetch('https://api.cloudinary.com/v1_1/dpsg0eocw/image/upload', {
-        method: 'POST',
-        body: formData,
-      })
+
+      const res = await fetch(
+        'https://api.cloudinary.com/v1_1/dpsg0eocw/image/upload',
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )
+
       const data = await res.json()
+
       if (data.secure_url) {
-        setForm((prev) => ({ ...prev, imageUrl: data.secure_url }))
+        setForm((prev) => ({
+          ...prev,
+          imageUrl: data.secure_url,
+        }))
       } else {
-        alert('Image upload failed. Please paste an image URL instead.')
+        alert('Image upload failed')
       }
-    } catch {
-      alert('Image upload failed. Please paste an image URL instead.')
+    } catch (error) {
+      alert('Image upload failed')
     } finally {
       setImageUploading(false)
     }
@@ -91,11 +151,14 @@ export default function VenueForm({ initialValues, onSubmit, onCancel, loading }
 
   const handleSubmit = (e) => {
     e.preventDefault()
+
     const errs = validate()
+
     if (Object.keys(errs).length > 0) {
       setErrors(errs)
       return
     }
+
     onSubmit({
       name: form.name.trim(),
       sportsType: form.sportsType,
@@ -111,156 +174,199 @@ export default function VenueForm({ initialValues, onSubmit, onCancel, loading }
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Name */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Venue Name *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Venue Name *
+        </label>
+
         <input
           name="name"
           value={form.name}
           onChange={handleChange}
           placeholder="e.g. Green Field Turf"
-          className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.name ? 'border-red-400' : 'border-gray-300'}`}
+          className={`w-full border rounded-lg px-3 py-2 text-sm ${
+            errors.name ? 'border-red-400' : 'border-gray-300'
+          }`}
         />
-        {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
+
+        {errors.name && (
+          <p className="mt-1 text-xs text-red-500">{errors.name}</p>
+        )}
       </div>
 
       {/* Sports Type */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Sports Type *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Sports Type *
+        </label>
+
         <select
           name="sportsType"
           value={form.sportsType}
           onChange={handleChange}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
         >
-          {SPORTS_TYPES.map((t) => (
-            <option key={t} value={t}>{t}</option>
+          {SPORTS_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
           ))}
         </select>
       </div>
 
       {/* Location */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Location *
+        </label>
+
         <input
           name="location"
           value={form.location}
           onChange={handleChange}
-          placeholder="e.g. Chennai, Tamil Nadu"
-          className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.location ? 'border-red-400' : 'border-gray-300'}`}
+          placeholder="e.g. Chennai"
+          className={`w-full border rounded-lg px-3 py-2 text-sm ${
+            errors.location ? 'border-red-400' : 'border-gray-300'
+          }`}
         />
-        {errors.location && <p className="mt-1 text-xs text-red-500">{errors.location}</p>}
+
+        {errors.location && (
+          <p className="mt-1 text-xs text-red-500">{errors.location}</p>
+        )}
       </div>
 
       {/* Description */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Description
+        </label>
+
         <textarea
           name="description"
           value={form.description}
           onChange={handleChange}
           rows={3}
-          placeholder="Brief description of the venue..."
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          placeholder="Brief description..."
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
         />
       </div>
 
       {/* Price */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Price per Hour (₹) *</label>
-        <input
-          name="pricePerHour"
-          type="number"
-          min="0"
-          step="0.01"
-          value={form.pricePerHour}
-          onChange={handleChange}
-          placeholder="e.g. 500"
-          className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.pricePerHour ? 'border-red-400' : 'border-gray-300'}`}
-        />
-        {errors.pricePerHour && <p className="mt-1 text-xs text-red-500">{errors.pricePerHour}</p>}
-      </div>
-
-      {/* Image — required */}
-      <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Venue Image * <span className="text-gray-400 font-normal">(required)</span>
+          Price per Hour (₹) *
         </label>
 
-        {/* File upload → Cloudinary */}
         <input
-          type="file"
-          accept="image/jpeg,image/jpg,image/png,image/webp"
-          onChange={handleImageFileChange}
-          disabled={imageUploading}
-          className={`block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-2 disabled:opacity-50 ${errors.imageUrl ? 'border border-red-400 rounded-lg p-1' : ''}`}
+          type="number"
+          name="pricePerHour"
+          value={form.pricePerHour}
+          onChange={handleChange}
+          placeholder="500"
+          className={`w-full border rounded-lg px-3 py-2 text-sm ${
+            errors.pricePerHour ? 'border-red-400' : 'border-gray-300'
+          }`}
         />
-        {imageUploading && (
-          <p className="text-xs text-blue-500 mb-2 flex items-center gap-1">
-            <span className="animate-spin">⏳</span> Uploading image to cloud...
+
+        {errors.pricePerHour && (
+          <p className="mt-1 text-xs text-red-500">
+            {errors.pricePerHour}
           </p>
         )}
+      </div>
 
-        <p className="text-xs text-gray-400 mb-1 text-center">— OR paste an image URL below —</p>
+      {/* Image */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Venue Image *
+        </label>
+
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageFileChange}
+          disabled={imageUploading}
+          className="block w-full text-sm text-gray-500 mb-2"
+        />
+
+        <p className="text-xs text-gray-400 mb-2 text-center">
+          — OR paste image URL —
+        </p>
 
         <input
           name="imageUrl"
           value={form.imageUrl}
           onChange={handleChange}
-          placeholder="https://example.com/venue-image.jpg"
-          disabled={imageUploading}
-          className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 ${errors.imageUrl ? 'border-red-400' : 'border-gray-300'}`}
+          placeholder="https://example.com/image.jpg"
+          className={`w-full border rounded-lg px-3 py-2 text-sm ${
+            errors.imageUrl ? 'border-red-400' : 'border-gray-300'
+          }`}
         />
-        {errors.imageUrl && <p className="mt-1 text-xs text-red-500">{errors.imageUrl}</p>}
 
-        {form.imageUrl && !imageUploading && (
+        {errors.imageUrl && (
+          <p className="mt-1 text-xs text-red-500">
+            {errors.imageUrl}
+          </p>
+        )}
+
+        {form.imageUrl && (
           <img
             src={form.imageUrl}
             alt="Preview"
-            className="mt-2 h-32 w-full object-cover rounded-lg border border-gray-200"
-            onError={(e) => { e.currentTarget.style.display = 'none' }}
+            className="mt-3 h-32 w-full object-cover rounded-lg"
           />
         )}
       </div>
 
       {/* Slots */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Available Time Slots</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Available Time Slots
+        </label>
+
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
           {DEFAULT_SLOTS.map((slot) => (
             <button
               key={slot}
               type="button"
               onClick={() => toggleSlot(slot)}
-              className={`text-xs px-2 py-1.5 rounded border transition-colors ${
+              className={`text-xs px-2 py-1.5 rounded border ${
                 form.slots.includes(slot)
                   ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
+                  : 'bg-white text-gray-600 border-gray-300'
               }`}
             >
               {slot}
             </button>
           ))}
         </div>
-        <p className="text-xs text-gray-400 mt-1">{form.slots.length} slot(s) selected</p>
       </div>
 
-      {/* Actions */}
+      {/* Buttons */}
       <div className="flex gap-3 pt-2">
         <button
           type="button"
           onClick={onCancel}
-          disabled={loading || imageUploading}
-          className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          disabled={loading}
+          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
         >
           Cancel
         </button>
+
         <button
           type="submit"
           disabled={loading || imageUploading}
-          className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg"
         >
-          {loading ? 'Saving…' : imageUploading ? 'Uploading…' : initialValues ? 'Update Venue' : 'Add Venue'}
+          {loading
+            ? 'Saving...'
+            : imageUploading
+            ? 'Uploading...'
+            : initialValues
+            ? 'Update Venue'
+            : 'Add Venue'}
         </button>
       </div>
     </form>
   )
 }
+
