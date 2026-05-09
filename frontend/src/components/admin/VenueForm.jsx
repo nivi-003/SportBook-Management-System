@@ -21,6 +21,7 @@ export default function VenueForm({ initialValues, onSubmit, onCancel, loading }
     image: null,
   })
   const [errors, setErrors] = useState({})
+  const [imageUploading, setImageUploading] = useState(false)
 
   // Populate form when editing
   useEffect(() => {
@@ -63,10 +64,32 @@ export default function VenueForm({ initialValues, onSubmit, onCancel, loading }
     return errs
   }
 
-  const handleImageFileChange = (e) => {
+  const handleImageFileChange = async (e) => {
     const file = e.target.files[0]
-    if (file) {
-      setForm((prev) => ({ ...prev, image: file, imageUrl: '' }))
+    if (!file) return
+
+    setImageUploading(true)
+    try {
+      // Upload directly to Cloudinary from frontend
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('upload_preset', 'sportbook_unsigned')
+      formData.append('cloud_name', 'dpsg0eocw')
+
+      const res = await fetch('https://api.cloudinary.com/v1_1/dpsg0eocw/image/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await res.json()
+      if (data.secure_url) {
+        setForm((prev) => ({ ...prev, imageUrl: data.secure_url, image: null }))
+      } else {
+        alert('Image upload failed. Please try pasting an image URL instead.')
+      }
+    } catch (err) {
+      alert('Image upload failed. Please try pasting an image URL instead.')
+    } finally {
+      setImageUploading(false)
     }
   }
 
@@ -78,28 +101,16 @@ export default function VenueForm({ initialValues, onSubmit, onCancel, loading }
       return
     }
 
-    // If file selected, send as FormData; otherwise send as JSON with imageUrl
-    if (form.image) {
-      const formData = new FormData()
-      formData.append('name', form.name.trim())
-      formData.append('sportsType', form.sportsType)
-      formData.append('location', form.location.trim())
-      formData.append('description', form.description.trim())
-      formData.append('pricePerHour', form.pricePerHour)
-      formData.append('slots', JSON.stringify(form.slots))
-      formData.append('image', form.image)
-      onSubmit(formData)
-    } else {
-      onSubmit({
-        name: form.name.trim(),
-        sportsType: form.sportsType,
-        location: form.location.trim(),
-        description: form.description.trim(),
-        pricePerHour: form.pricePerHour,
-        slots: form.slots,
-        imageUrl: form.imageUrl.trim(),
-      })
-    }
+    // Always send as JSON — image is already uploaded to Cloudinary as a URL
+    onSubmit({
+      name: form.name.trim(),
+      sportsType: form.sportsType,
+      location: form.location.trim(),
+      description: form.description.trim(),
+      pricePerHour: form.pricePerHour,
+      slots: form.slots,
+      imageUrl: form.imageUrl.trim(),
+    })
   }
 
   return (
@@ -178,13 +189,15 @@ export default function VenueForm({ initialValues, onSubmit, onCancel, loading }
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Venue Image</label>
 
-        {/* File upload */}
+        {/* File upload — uploads directly to Cloudinary */}
         <input
           type="file"
           accept="image/jpeg,image/jpg,image/png,image/webp"
           onChange={handleImageFileChange}
-          className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-2"
+          disabled={imageUploading}
+          className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-2 disabled:opacity-50"
         />
+        {imageUploading && <p className="text-xs text-blue-500 mb-2">⏳ Uploading image...</p>}
 
         <p className="text-xs text-gray-400 mb-1">— OR paste an image URL —</p>
 
@@ -194,18 +207,12 @@ export default function VenueForm({ initialValues, onSubmit, onCancel, loading }
           value={form.imageUrl}
           onChange={handleChange}
           placeholder="https://example.com/image.jpg"
-          disabled={!!form.image}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
+          disabled={imageUploading}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
         />
 
         {/* Preview */}
-        {form.image && (
-          <div className="mt-2">
-            <img src={URL.createObjectURL(form.image)} alt="Preview" className="h-28 w-full object-cover rounded-lg" />
-            <button type="button" onClick={() => setForm(p => ({ ...p, image: null }))} className="text-xs text-red-500 mt-1 hover:underline">Remove file</button>
-          </div>
-        )}
-        {!form.image && form.imageUrl && (
+        {form.imageUrl && (
           <img src={form.imageUrl} alt="Preview" className="mt-2 h-28 w-full object-cover rounded-lg" onError={(e) => { e.currentTarget.style.display = 'none' }} />
         )}
       </div>
