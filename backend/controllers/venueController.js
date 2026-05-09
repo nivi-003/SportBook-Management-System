@@ -20,9 +20,11 @@ exports.getAllVenues = async (req, res) => {
 exports.getVenueById = async (req, res) => {
   try {
     const venue = await Venue.findById(req.params.id);
+
     if (!venue) {
       return res.status(404).json({ message: "Venue not found" });
     }
+
     res.status(200).json(venue);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -35,27 +37,31 @@ exports.getVenueById = async (req, res) => {
  */
 exports.createVenue = async (req, res) => {
   try {
-    const { name, sportsType, location, pricePerHour, description, slots } = req.body;
+    const {
+      name,
+      sportsType,
+      location,
+      pricePerHour,
+      description,
+      slots,
+    } = req.body;
 
     // Validate required fields
     if (!name || !sportsType || !location || pricePerHour === undefined) {
-      return res.status(400).json({ 
-        message: "Missing required fields: name, sportsType, location, pricePerHour" 
+      return res.status(400).json({
+        message:
+          "Missing required fields: name, sportsType, location, pricePerHour",
       });
     }
 
-    // Set imageUrl — support Cloudinary upload, file upload, or direct URL input
-    let imageUrl = "";
-    if (req.file && req.file.path) {
-      imageUrl = req.file.path; // Cloudinary returns the URL in req.file.path
-    } else if (req.file && req.file.filename) {
-      imageUrl = `/uploads/${req.file.filename}`;
-    } else if (req.body.imageUrl) {
-      imageUrl = req.body.imageUrl;
-    }
+    // Image URL handling
+    const imageUrl = req.file
+      ? req.file.path
+      : req.body.imageUrl || "";
 
-    // Parse slots - may be JSON string or array
+    // Parse slots
     let parsedSlots = [];
+
     if (slots) {
       if (typeof slots === "string") {
         try {
@@ -68,7 +74,7 @@ exports.createVenue = async (req, res) => {
       }
     }
 
-    // Create venue document
+    // Create venue
     const venue = new Venue({
       name,
       sportsType,
@@ -80,8 +86,10 @@ exports.createVenue = async (req, res) => {
     });
 
     const createdVenue = await venue.save();
+
     res.status(201).json(createdVenue);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -93,20 +101,27 @@ exports.createVenue = async (req, res) => {
 exports.updateVenue = async (req, res) => {
   try {
     const venue = await Venue.findById(req.params.id);
+
     if (!venue) {
       return res.status(404).json({ message: "Venue not found" });
     }
 
-    // Apply updates from req.body
-    const { name, sportsType, location, pricePerHour, description, slots } = req.body;
-    
+    const {
+      name,
+      sportsType,
+      location,
+      pricePerHour,
+      description,
+      slots,
+    } = req.body;
+
     if (name !== undefined) venue.name = name;
     if (sportsType !== undefined) venue.sportsType = sportsType;
     if (location !== undefined) venue.location = location;
     if (pricePerHour !== undefined) venue.pricePerHour = pricePerHour;
     if (description !== undefined) venue.description = description;
-    
-    // Parse slots if provided
+
+    // Parse slots
     if (slots !== undefined) {
       if (typeof slots === "string") {
         try {
@@ -119,18 +134,18 @@ exports.updateVenue = async (req, res) => {
       }
     }
 
-    // Update imageUrl — support Cloudinary upload, file upload, or direct URL input
-    if (req.file && req.file.path) {
-      venue.imageUrl = req.file.path; // Cloudinary URL
-    } else if (req.file && req.file.filename) {
-      venue.imageUrl = `/uploads/${req.file.filename}`;
+    // Image update
+    if (req.file) {
+      venue.imageUrl = req.file.path;
     } else if (req.body.imageUrl !== undefined) {
       venue.imageUrl = req.body.imageUrl;
     }
 
     const updatedVenue = await venue.save();
+
     res.status(200).json(updatedVenue);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -142,11 +157,13 @@ exports.updateVenue = async (req, res) => {
 exports.deleteVenue = async (req, res) => {
   try {
     const venue = await Venue.findById(req.params.id);
+
     if (!venue) {
       return res.status(404).json({ message: "Venue not found" });
     }
 
     await venue.deleteOne();
+
     res.status(200).json({ message: "Venue deleted" });
   } catch (error) {
     res.status(500).json({ message: error.message });
